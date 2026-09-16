@@ -5,11 +5,9 @@ use crate::sql::db_connection_pool::DbConnectionPool;
 use crate::sql::sql_provider_datafusion::SqlTable;
 use async_trait::async_trait;
 use dashmap::DashMap;
+use datafusion::catalog::{CatalogProvider, SchemaProvider, TableProvider};
+use datafusion::common::TableReference;
 use datafusion::error::{DataFusionError, Result as DataFusionResult};
-use datafusion::{
-    catalog::{CatalogProvider, SchemaProvider, TableProvider},
-    sql::TableReference,
-};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 type Pool<T, P> = Arc<dyn DbConnectionPool<T, P> + Send + Sync>;

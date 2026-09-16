@@ -11,11 +11,10 @@ use async_trait::async_trait;
 use datafusion::catalog::Session;
 use datafusion::{
     catalog::TableProviderFactory,
-    common::Constraints,
+    common::{Constraints, TableReference},
     datasource::TableProvider,
     error::{DataFusionError, Result as DataFusionResult},
     logical_expr::CreateExternalTable,
-    sql::TableReference,
 };
 use datafusion_table_providers_common::sql::arrow_sql_gen::statement::{
     table_reference_to_sea_table_ref, CreateTableBuilder, IndexBuilder, InsertBuilder,
@@ -1280,7 +1279,7 @@ pub(crate) mod tests {
         let external_table = CreateExternalTable {
             schema: df_schema,
             name: TableReference::bare("test_table"),
-            location: String::new(),
+            locations: vec![String::new()],
             file_type: String::new(),
             table_partition_cols: vec![],
             if_not_exists: true,

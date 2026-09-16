@@ -10,6 +10,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use datafusion::common::tree_node::TreeNodeRecursion;
 use datafusion_table_providers_common::sql::db_connection_pool::DbConnectionPool;
 
 use async_trait::async_trait;
@@ -23,6 +24,7 @@ use std::sync::Arc;
 use datafusion::catalog::Session;
 use datafusion::{
     arrow::datatypes::SchemaRef,
+    common::TableReference,
     config::ConfigOptions,
     datasource::TableProvider,
     error::{DataFusionError, Result as DataFusionResult},
@@ -33,9 +35,10 @@ use datafusion::{
         filter_pushdown::{ChildPushdownResult, FilterPushdownPhase, FilterPushdownPropagation},
         sort_pushdown::SortOrderPushdownResult,
         stream::RecordBatchStreamAdapter,
-        DisplayAs, DisplayFormatType, ExecutionPlan, PlanProperties, SendableRecordBatchStream,
+        DisplayAs, DisplayFormatType, ExecutionPlan, PhysicalExpr, PlanProperties,
+        SendableRecordBatchStream,
     },
-    sql::{unparser::dialect::Dialect, TableReference},
+    sql::unparser::dialect::Dialect,
 };
 
 pub struct AdbcDBTable<T: 'static, P: 'static> {
@@ -266,5 +269,12 @@ impl<T: 'static, P: 'static> ExecutionPlan for AdbcSqlExec<T, P> {
 
         let stream = futures::stream::once(fut).try_flatten();
         Ok(Box::pin(RecordBatchStreamAdapter::new(schema, stream)))
+    }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> DataFusionResult<TreeNodeRecursion>,
+    ) -> DataFusionResult<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
     }
 }

@@ -2,6 +2,8 @@ use std::{fmt, sync::Arc};
 
 use arrow::array::{ArrayRef, RecordBatch, UInt64Array};
 use arrow::datatypes::{DataType, Field, Schema, SchemaRef};
+use datafusion::common::tree_node::TreeNodeRecursion;
+use datafusion::physical_plan::PhysicalExpr;
 use datafusion::{
     error::DataFusionError,
     execution::{SendableRecordBatchStream, TaskContext},
@@ -113,6 +115,13 @@ impl ExecutionPlan for CountExec {
             schema,
             futures::stream::once(async move { Ok(batch) }),
         )))
+    }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> datafusion::error::Result<TreeNodeRecursion>,
+    ) -> datafusion::error::Result<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
     }
 }
 

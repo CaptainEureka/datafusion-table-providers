@@ -1,6 +1,8 @@
 use crate::pool::OracleConnectionPool;
 use async_trait::async_trait;
 use datafusion::catalog::Session;
+use datafusion::common::tree_node::TreeNodeRecursion;
+use datafusion::physical_plan::PhysicalExpr;
 use futures::TryStreamExt;
 use std::fmt::Display;
 use std::{fmt, sync::Arc};
@@ -9,6 +11,7 @@ use crate::conn::OraclePooledConnection;
 use datafusion::{
     arrow::datatypes::{DataType, SchemaRef},
     common::utils::quote_identifier,
+    common::TableReference,
     config::ConfigOptions,
     datasource::TableProvider,
     error::{DataFusionError, Result as DataFusionResult},
@@ -27,7 +30,6 @@ use datafusion::{
             dialect::{CustomDialect, CustomDialectBuilder, Dialect},
             Unparser,
         },
-        TableReference,
     },
 };
 use datafusion_table_providers_common::sql::db_connection_pool::DbConnectionPool;
@@ -459,5 +461,12 @@ impl ExecutionPlan for OracleSQLExec {
         let stream = futures::stream::once(fut).try_flatten();
         let schema = Arc::clone(&self.schema());
         Ok(Box::pin(RecordBatchStreamAdapter::new(schema, stream)))
+    }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> DataFusionResult<TreeNodeRecursion>,
+    ) -> DataFusionResult<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
     }
 }

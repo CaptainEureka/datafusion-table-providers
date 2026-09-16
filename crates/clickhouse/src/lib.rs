@@ -20,11 +20,11 @@ pub mod pool;
 use clickhouse::Client;
 use datafusion::arrow::datatypes::SchemaRef;
 use datafusion::catalog::TableProvider;
+use datafusion::common::{Constraints, TableReference};
 use datafusion::sql::sqlparser::ast::{
     Expr, FunctionArg, FunctionArgExpr, FunctionArgOperator, Ident, Value,
 };
 use datafusion::sql::unparser;
-use datafusion::{common::Constraints, sql::TableReference};
 use std::sync::Arc;
 
 use crate::conn::ClickHouseConnection;

@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use datafusion::arrow::{array::RecordBatch, datatypes::SchemaRef};
+use datafusion::common::tree_node::TreeNodeRecursion;
 use datafusion::physical_plan::execution_plan::{Boundedness, EmissionType};
+use datafusion::physical_plan::PhysicalExpr;
 use datafusion::{
     common::Statistics,
     error::{DataFusionError, Result},
@@ -142,6 +144,13 @@ impl ExecutionPlan for MockExec {
                 stream,
             )))
         }
+    }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> Result<TreeNodeRecursion>,
+    ) -> Result<TreeNodeRecursion> {
+        todo!()
     }
 
     // Panics if one of the batches is an error

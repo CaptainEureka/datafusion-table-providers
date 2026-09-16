@@ -1,6 +1,8 @@
 use std::{fmt, sync::Arc};
 
 use async_trait::async_trait;
+use datafusion::common::tree_node::TreeNodeRecursion;
+use datafusion::physical_plan::PhysicalExpr;
 use datafusion::sql::unparser::{dialect::Dialect, Unparser};
 use datafusion::{
     common::utils::quote_identifier,
@@ -120,6 +122,13 @@ impl ExecutionPlan for DeletionExec {
             }),
         )))
     }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> datafusion::error::Result<TreeNodeRecursion>,
+    ) -> datafusion::error::Result<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
+    }
 }
 
 #[async_trait]
@@ -196,6 +205,13 @@ impl ExecutionPlan for UpdateExec {
                 count_to_record_batch(schema, count)
             }),
         )))
+    }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> datafusion::error::Result<TreeNodeRecursion>,
+    ) -> datafusion::error::Result<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
     }
 }
 

@@ -12,7 +12,11 @@ use crate::sql::db_connection_pool::{
 use async_trait::async_trait;
 use datafusion::{
     catalog::Session,
-    physical_plan::execution_plan::{Boundedness, EmissionType},
+    common::tree_node::TreeNodeRecursion,
+    physical_plan::{
+        execution_plan::{Boundedness, EmissionType},
+        PhysicalExpr,
+    },
     sql::unparser::dialect::{DefaultDialect, Dialect},
 };
 use futures::TryStreamExt;
@@ -25,7 +29,7 @@ use std::{
 
 use datafusion::{
     arrow::datatypes::{DataType, Field, Schema, SchemaRef},
-    common::Constraints,
+    common::{Constraints, TableReference},
     config::ConfigOptions,
     datasource::TableProvider,
     error::{DataFusionError, Result as DataFusionResult},
@@ -44,7 +48,7 @@ use datafusion::{
         DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning, PlanProperties,
         SendableRecordBatchStream,
     },
-    sql::{unparser::Unparser, TableReference},
+    sql::unparser::Unparser,
 };
 
 mod expr;
@@ -689,6 +693,13 @@ impl<T: 'static, P: 'static> ExecutionPlan for SqlExec<T, P> {
         let stream = futures::stream::once(fut).try_flatten();
         Ok(Box::pin(RecordBatchStreamAdapter::new(schema, stream)))
     }
+
+    fn apply_expressions(
+        &self,
+        _f: &mut dyn FnMut(&Arc<dyn PhysicalExpr>) -> DataFusionResult<TreeNodeRecursion>,
+    ) -> DataFusionResult<TreeNodeRecursion> {
+        Ok(TreeNodeRecursion::Continue)
+    }
 }
 
 pub async fn get_stream<T: 'static, P: 'static>(
@@ -714,8 +725,8 @@ pub fn to_execution_error(
 mod tests {
     use std::{error::Error, sync::Arc};
 
+    use datafusion::common::TableReference;
     use datafusion::execution::context::SessionContext;
-    use datafusion::sql::TableReference;
     use tracing::{level_filters::LevelFilter, subscriber::DefaultGuard, Dispatch};
 
     use crate::sql::sql_provider_datafusion::SqlTable;
@@ -736,8 +747,8 @@ mod tests {
         use datafusion::arrow::datatypes::{DataType, Field, Schema, TimeUnit};
         use datafusion::sql::unparser::dialect::{Dialect, SqliteDialect};
         use datafusion::{
+            common::TableReference,
             logical_expr::{col, lit},
-            sql::TableReference,
         };
 
         use crate::sql::db_connection_pool::{
